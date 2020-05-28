@@ -1,1 +1,0 @@
-{'load handling', 'storage', 'handling device', 'storage system', 'system'}
