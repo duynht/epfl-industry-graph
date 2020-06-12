@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <div class="form-group">
+                    {{ form.node_str.label(class="form-control-label") }}
+                    {{ form.node_str(class="form-control")}}
+                </div>
+                <div class="form-group">
+                    {{ form.src_type.label(class="form-control-label") }}
+                    {{ form.src_type(class="form-control")}}
+                </div>
+                <div class="form-group">
+                    {{ form.dest_type.label(class="form-control-label") }}
+                    {{ form.dest_type(class="form-control")}}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+
+            <div>
+                <ul>
+                {% for item in data %}
+                    <li>{{item}}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}
