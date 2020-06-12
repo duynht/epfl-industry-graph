@@ -42,7 +42,8 @@ persona_emb = wv.load_word2vec_format('data/embeddings/persona.embedding')
 fields_index_l2 =  faiss.IndexFlatL2(persona_emb.vectors.shape[1])
 fields_index_l2 = faiss.index_cpu_to_gpu(res, 0, fields_index_l2)
 
-fields_index_l2.add([persona_emb[str(key)] for key in sorted(list(persona_emb.vocab)) if node_type_dict[persona_inv_map[int(key)]] == 'field'])
+db = np.array([persona_emb[str(key)] for key in sorted(list(persona_emb.vocab)) if node_type_dict[persona_inv_map[int(key)]] == 'field'])
+fields_index_l2.add(db)
 
 count = 0
 top_k = 5
@@ -57,13 +58,13 @@ for node_id, node_str in node_dict.items():
         continue
     num_persona = len(persona_map[node_id])
     neighbors = []
-    queries = [persona_emb[str(persona)] for persona in persona_map[node_id]]
+    queries = np.array([persona_emb[str(persona)] for persona in persona_map[node_id]])
     distances, indices = fields_index_l2.search(queries, num_persona + top_k)
 
     neighbors += [pair in sublist for sublist in zip(distances[num_persona + 1:], [[persona_inv_map[id] for id in index] for index in indices[num_persona + 1:]])] 
 
     neighbors = sorted(neighbors)
-    companies_companies[node_str] = [node_dict[persona_inv_map[neighbor_id]] for neighbor_dist, neighbor_id in neighbors[:top_k]]
+    fields_fields[node_str] = [node_dict[persona_inv_map[neighbor_id]] for neighbor_dist, neighbor_id in neighbors[:top_k]]
 
 # for node_id, node_str in node_dict.items():
 #     if count == 10:
