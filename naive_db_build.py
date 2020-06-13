@@ -4,6 +4,7 @@ import os
 from glob import glob
 from gensim.models import KeyedVectors as wv
 import numpy as np
+import pandas as pd
 from collections import defaultdict
 import faiss
 
@@ -39,7 +40,7 @@ persona_emb = wv.load_word2vec_format('data/embeddings/persona.embedding')
 # companies_index_l2 = faiss.index_cpu_to_gpu(res, 0, companies_index_l2)
 # companies_index_l2.add([persona_emb[key] for key in sorted(list(persona_emb.vocab)) if node_type_dict[int(key)] == 'company'])
 
-fields_index_l2 =  faiss.IndexFlatL2(persona_emb.vectors.shape[1])
+fields_index_l2 =  faiss.IndexFlatL2(persona_emb.vector_size)
 fields_index_l2 = faiss.index_cpu_to_gpu(res, 0, fields_index_l2)
 
 db = np.array([persona_emb[str(key)] for key in sorted(list(persona_emb.vocab)) if node_type_dict[persona_inv_map[int(key)]] == 'field'])
@@ -57,14 +58,20 @@ for node_id, node_str in node_dict.items():
     else:
         continue
     num_persona = len(persona_map[node_id])
-    neighbors = []
+    neighbors = {}
     queries = np.array([persona_emb[str(persona)] for persona in persona_map[node_id]])
     distances, indices = fields_index_l2.search(queries, num_persona + top_k)
 
-    neighbors += [pair in sublist for sublist in zip(distances[num_persona + 1:], [[persona_inv_map[id] for id in index] for index in indices[num_persona + 1:]])] 
+    distances = [dist for batch in distances for dist in batch]
+    indices = [persona_inv_map[id] for index in indices for id in index]
 
-    neighbors = sorted(neighbors)
-    fields_fields[node_str] = [node_dict[persona_inv_map[neighbor_id]] for neighbor_dist, neighbor_id in neighbors[:top_k]]
+    neighbors = pd.DataFrame(list(zip(indices, distances)))
+    neighbors = neighbors.groupby(0).min().to_dict()[1].items()
+    neighbors = sorted(neighbors, key=lambda x: x[1])
+    
+    # import pdb; pdb.set_trace()
+
+    fields_fields[node_str] = [node_dict[neighbor_id] for neighbor_id, _ in neighbors[:top_k]]
 
 # for node_id, node_str in node_dict.items():
 #     if count == 10:
