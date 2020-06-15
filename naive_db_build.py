@@ -2,7 +2,7 @@ import pickle
 import json
 import os
 from glob import glob
-from gensim.models import KeyedVectors as wv
+from gensim.models import Word2Vec as wv
 import numpy as np
 import pandas as pd
 from collections import defaultdict
@@ -15,8 +15,6 @@ persona_map = defaultdict(list)
 persona_inv_map = {}
 
 threshold = 0.6
-
-res = faiss.StandardGpuResources()
 
 with open('data/parsed-graph/node_type_dict.pkl','rb') as f:
     node_type_dict = pickle.load(f)
@@ -41,7 +39,6 @@ persona_emb = wv.load_word2vec_format('data/embeddings/persona.embedding')
 # companies_index_l2.add([persona_emb[key] for key in sorted(list(persona_emb.vocab)) if node_type_dict[int(key)] == 'company'])
 
 fields_index_l2 =  faiss.IndexFlatL2(persona_emb.vector_size)
-fields_index_l2 = faiss.index_cpu_to_gpu(res, 0, fields_index_l2)
 
 db = np.array([persona_emb[str(key)] for key in sorted(list(persona_emb.vocab)) if node_type_dict[persona_inv_map[int(key)]] == 'field'])
 fields_index_l2.add(db)

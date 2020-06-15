@@ -13,8 +13,8 @@
                     {{ form.src_type(class="form-control")}}
                 </div>
                 <div class="form-group">
-                    {{ form.dest_type.label(class="form-control-label") }}
-                    {{ form.dest_type(class="form-control")}}
+                    {{ form.dst_type.label(class="form-control-label") }}
+                    {{ form.dst_type(class="form-control")}}
                 </div>
             </fieldset>
             <div class="form-group">
@@ -22,11 +22,32 @@
             </div>
 
             <div>
-                <ul>
-                {% for item in data %}
-                    <li>{{item}}</li>
-                {% endfor %}
-                </ul>
+                <table class="table">
+                    <tr>
+                        <th scope="col">Precision</th>
+                        <th scope="col">Recall</th>
+                        <th scope="col">10 Nearest Neighbors</th>
+                        <th scope="col">Top-10 Ground Truth</th>
+                    </tr>
+                    <tr>
+                        <td>{{data['precision']}}</td>
+                        <td>{{data['recall']}}</td>
+                        <td>
+                            <ol>
+                                {% for neighbor in data['neighbors'] %}
+                                <li>{{neighbor}}</li>
+                                {% endfor %}
+                            </ol>
+                        </td>
+                        <td>
+                            <ol>
+                                {% for neighbor in data['ground truth'] %}
+                                <li>{{neighbor}}</li>
+                                {% endfor %}
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </form>
     </div>
