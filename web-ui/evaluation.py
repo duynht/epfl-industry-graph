@@ -18,7 +18,8 @@ class NodeType(Enum):
 class QueryType(Enum):
     company2company = 0,
     company2field = 1,
-    field2company = 2
+    field2company = 2,
+    field2field = 3
 
 class Evaluator:
     persona_map = defaultdict(set)
@@ -98,36 +99,56 @@ class Evaluator:
         node_str = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', node_str.lower()).split())
         query_type = QueryType[src_type.name+'2'+dst_type.name]
 
-        if node_str not in self.inv_node_dict:
-            if not self.evaluate_set[query_type][node_str]:
-                return 0, 0, [], []
-            else:
-                return 0, 0, [], [name for _, name in self.evaluate_list[query_type][node_str][:self.top_k]]
+        if query_type.name == 'field2field':
+            node_id = self.inv_node_dict[node_str]
+            
+            num_persona = len(self.persona_map[node_id])
 
-        node_id = self.inv_node_dict[node_str]
-        
-        num_persona = len(self.persona_map[node_id])
+            queries = np.array([self.persona_emb[str(persona)] for persona in self.persona_map[node_id]])
+            distances, indices = self.db_index[dst_type].search(queries, num_persona * self.top_k) # persona are not connected but we expect to have num_persona duplications of related nodes
 
-        queries = np.array([self.persona_emb[str(persona)] for persona in self.persona_map[node_id]])
-        distances, indices = self.db_index[dst_type].search(queries, num_persona * self.top_k) # persona are not connected but we expect to have num_persona duplications of related nodes
+            distances = [dist for batch in distances for dist in batch]
+            indices = [self.inv_persona_map[self.index_map[dst_type][id]] for index in indices for id in index]
 
-        distances = [dist for batch in distances for dist in batch]
-        indices = [self.inv_persona_map[self.index_map[dst_type][id]] for index in indices for id in index]
+            neighbors = pd.DataFrame(list(zip(indices, distances)))
+            neighbors = neighbors.groupby(0).min().to_dict()[1].items()
+            neighbors = sorted(neighbors, key=lambda x: x[1])                
 
-        neighbors = pd.DataFrame(list(zip(indices, distances)))
-        neighbors = neighbors.groupby(0).min().to_dict()[1].items()
-        neighbors = sorted(neighbors, key=lambda x: x[1])                
+            neighbors = [self.node_dict[neighbor_id] for neighbor_id, _ in neighbors[:self.top_k]]     
 
-        neighbors = [self.node_dict[neighbor_id] for neighbor_id, _ in neighbors[:self.top_k]]     
+            return 0 , 0, neighbors, []
 
-        precision = len([neighbor for neighbor in neighbors if neighbor in self.evaluate_set[query_type][node_str] ]) / len(neighbors)
-
-        if not self.evaluate_set[query_type][node_str]:
-            recall = 0
         else:
-            recall = len([neighbor for neighbor in neighbors if neighbor in self.evaluate_set[query_type][node_str] ]) / len(self.evaluate_set[query_type][node_str])
+            if node_str not in self.inv_node_dict:
+                if not self.evaluate_set[query_type][node_str]:
+                    return 0, 0, [], []
+                else:
+                    return 0, 0, [], [name for _, name in self.evaluate_list[query_type][node_str][:self.top_k]]
 
-        return precision, recall, neighbors, [name for _, name in self.evaluate_list[query_type][node_str][:self.top_k]]
+            node_id = self.inv_node_dict[node_str]
+            
+            num_persona = len(self.persona_map[node_id])
+
+            queries = np.array([self.persona_emb[str(persona)] for persona in self.persona_map[node_id]])
+            distances, indices = self.db_index[dst_type].search(queries, num_persona * self.top_k) # persona are not connected but we expect to have num_persona duplications of related nodes
+
+            distances = [dist for batch in distances for dist in batch]
+            indices = [self.inv_persona_map[self.index_map[dst_type][id]] for index in indices for id in index]
+
+            neighbors = pd.DataFrame(list(zip(indices, distances)))
+            neighbors = neighbors.groupby(0).min().to_dict()[1].items()
+            neighbors = sorted(neighbors, key=lambda x: x[1])                
+
+            neighbors = [self.node_dict[neighbor_id] for neighbor_id, _ in neighbors[:self.top_k]]     
+
+            precision = len([neighbor for neighbor in neighbors if neighbor in self.evaluate_set[query_type][node_str] ]) / len(neighbors)
+
+            if not self.evaluate_set[query_type][node_str]:
+                recall = 0
+            else:
+                recall = len([neighbor for neighbor in neighbors if neighbor in self.evaluate_set[query_type][node_str] ]) / len(self.evaluate_set[query_type][node_str])
+
+            return precision, recall, neighbors, [name for _, name in self.evaluate_list[query_type][node_str][:self.top_k]]
 
 
 if __name__ == "__main__":
