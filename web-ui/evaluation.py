@@ -95,7 +95,7 @@ class Evaluator:
                 except ValueError as e:
                     pass 
 
-    def evaluate_node(self, node_str, src_type, dst_type):        
+    def evaluate_node(self, node_str, src_type, dst_type, zefix_uid = None):        
         node_str = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', node_str.lower()).split())
         query_type = QueryType[src_type.name+'2'+dst_type.name]
 
@@ -117,15 +117,22 @@ class Evaluator:
             neighbors = [self.node_dict[neighbor_id] for neighbor_id, _ in neighbors[:self.top_k]]     
 
             return 0 , 0, neighbors, []
-
         else:
             if node_str not in self.inv_node_dict:
+                if zefix_uid is not None:
+                    zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.lower())
+                    node_str = zefix_uid
+                    
                 if not self.evaluate_set[query_type][node_str]:
                     return 0, 0, [], []
                 else:
                     return 0, 0, [], [name for _, name in self.evaluate_list[query_type][node_str][:self.top_k]]
 
             node_id = self.inv_node_dict[node_str]
+
+            if zefix_uid is not None:
+                zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.lower())
+                node_str = zefix_uid
             
             num_persona = len(self.persona_map[node_id])
 

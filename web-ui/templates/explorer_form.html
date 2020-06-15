@@ -5,16 +5,20 @@
             {{ form.hidden_tag() }}
             <fieldset class="form-group">
                 <div class="form-group">
-                    {{ form.node_str.label(class="form-control-label") }}
-                    {{ form.node_str(class="form-control")}}
-                </div>
-                <div class="form-group">
                     {{ form.src_type.label(class="form-control-label") }}
                     {{ form.src_type(class="form-control")}}
                 </div>
                 <div class="form-group">
                     {{ form.dst_type.label(class="form-control-label") }}
                     {{ form.dst_type(class="form-control")}}
+                </div>
+                <div class="form-group">
+                    {{ form.node_str.label(class="form-control-label") }}
+                    {{ form.node_str(class="form-control")}}
+                </div>
+                <div class="form-group">
+                    {{ form.zefix_uid.label(class="form-control-label") }}
+                    {{ form.zefix_uid(class="form-control")}}
                 </div>
             </fieldset>
             <div class="form-group">
