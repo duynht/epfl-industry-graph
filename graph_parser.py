@@ -18,10 +18,11 @@ if __name__ == '__main__':
     node_dict = {}
     node_type_dict = {}
     edge_list = []
-    for filepath in sorted(glob('data/raw/**', recursive=True)):
+    raw_path = 'data/raw/patent-extracted/using/**'
+    for filepath in sorted(glob(raw_path, recursive=True)):
         print(filepath)
         if os.path.isdir(filepath): continue
-        with open(filepath,encoding='utf8') as f:
+        with open(filepath,encoding='utf-8') as f:
             for line_num, line in enumerate(f):       
                 if not line:
                     break
@@ -42,6 +43,9 @@ if __name__ == '__main__':
     with open('data/parsed-graph/graph.txt','w') as f:
         for edge in edge_list:
             f.write('{0} {1}\n'.format(edge[0], edge[1]))
+
+    with open('data/parsed-graph/str2id_dict.pkl', 'wb') as f:
+        pickle.dump(node_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     node_dict = {value : key for key, value in node_dict.items()}
     with open('data/parsed-graph/node_dict.pkl','wb') as f:

@@ -21,20 +21,23 @@ if __name__ == "__main__":
     for filepath in sorted(glob('indeed/**', recursive=True)):
         print(filepath)
         if os.path.isdir(filepath): continue
-        with open(filepath,encoding='utf8') as f:
+        with open(filepath,encoding='utf-8') as f:
             data_list = []
             for line_num, line in enumerate(f):       
                 if not line:
                     break
                     
                 keyphrases_set = set()
-                data = ast.literal_eval(line)
+                # data = ast.literal_eval(line)
+                data = json.loads(line)
 
-                data['jobTitle'] = " ".join(w for w in nltk.wordpunct_tokenize(data['jobTitle']) \
-                                                if w.lower() in words.words())
+                # data['jobTitle'] = " ".join(w for w in nltk.wordpunct_tokenize(data['jobTitle']) \
+                #                                 if w.lower() in words.words())
+                data['jobTitle'] = data['jobTitle'].lower()
                 
                 entry = {}
-                entry['company_name'] = re.sub(r'[^a-zA-Z\d]','', data['companyName'].strip().lower())
+                # entry['company_name'] = re.sub(r'[^a-zA-Z\d]','', data['companyName'].strip().lower())
+                entry['company_name'] = data['companyName'].lower()
         
                 if not (data['jobTitle'] == 'NULL'):
                     extractor = pke.unsupervised.YAKE()

@@ -84,19 +84,23 @@ class Evaluator:
                     data = json.loads(line)
                     for key, entries in data.items():
                         if isinstance(entries, list):
-                            key = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', key.lower()).split())
+                            # key = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', key.lower()).split())
+                            key = key.lower()
 
                             self.evaluate_set[query_type][key] = self.evaluate_set[query_type][key].union(
-                                {' '.join(re.sub(r'[^a-zA-Z\d,]',' ', entry['value']['name'].lower()).split()) for entry in entries}
+                                # {' '.join(re.sub(r'[^a-zA-Z\d,]',' ', entry['value']['name'].lower()).split()) for entry in entries}
+                                {entry['value']['name'].lower().replace('_', ' ') for entry in entries}
                             )
 
-                            self.evaluate_list[query_type][key] += [(entry['score'],' '.join(re.sub(r'[^a-zA-Z\d,]',' ', entry['value']['name'].lower()).split())) for entry in entries]
+                            # self.evaluate_list[query_type][key] += [(entry['score'],' '.join(re.sub(r'[^a-zA-Z\d,]',' ', entry['value']['name'].lower()).split())) for entry in entries]
+                            self.evaluate_list[query_type][key] += [(entry['score'], entry['value']['name'].lower().replace('_', ' ')) for entry in entries]
     
                 except ValueError as e:
                     pass 
 
     def evaluate_node(self, node_str, src_type, dst_type, zefix_uid = None):        
-        node_str = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', node_str.lower()).split())
+        # node_str = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', node_str.lower()).split())
+        node_str = node_str.lower().replace('_', ' ')
         query_type = QueryType[src_type.name+'2'+dst_type.name]
 
         if query_type.name == 'field2field':
