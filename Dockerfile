@@ -32,7 +32,7 @@ RUN git clone https://github.com/kermitt2/entity-fishing \
 # RUN touch /root/.ssh/known_hosts
 # RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN git clone git@github.com:duynht/epfl-industry-graph.git
+RUN git clone https://github.com/duynht/epfl-industry-graph.git
 
 # RUN rm /root/.ssh/id_rsa
 
