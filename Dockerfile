@@ -1,26 +1,27 @@
 FROM Ubuntu
 FROM floydhub/dl-docker:cpu
 
+RUN add-apt-repository ppa:openjdk-r/ppa
 RUN apt-get update
 RUN apt-get install -y git
-RUN apt-get install openjdk-8-jdk
+RUN apt-get install -y openjdk-8-jre
 
-RUN git clone --branch 0.6.0 https://github.com/kermitt2/grobid \
-    && cd grobid \
-    && ./gradlew clean install \
-    && git clone https://github.com/kermitt2/grobid-ner.git \
-    && cp grobid-ner/resources/models/* grobid-home/models/ \
-    && ./gradlew clean install
-    && cd ../../
+RUN git clone https://github.com/kermitt2/grobid \
+&& cd grobid \
+&& ./gradlew clean install \
+&& git clone https://github.com/kermitt2/grobid-ner.git \
+&& cp grobid-ner/resources/models/* grobid-home/models/ \
+&& ./gradlew clean install
+&& cd ../../
 
 RUN git clone https://github.com/kermitt2/entity-fishing \
-    && cd data/db/ \
-    && wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-kb.zip \
-    && wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-en.zip \
-    && wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-fr.zip \
-    && wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-de.zip \
-    && for file in *.zip; do unzip $file; rm $file; done \
-    && cd ../../../ \
+&& cd data/db/ \
+&& wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-kb.zip \
+&& wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-en.zip \
+&& wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-fr.zip \
+&& wget https://science-miner.s3.amazonaws.com/entity-fishing/0.0.4/linux/db-de.zip \
+&& for file in *.zip; do unzip $file; rm $file; done \
+&& cd ../../../ \
 
 # ARG SSH_PRIVATE_KEY
 # RUN mkdir /root/.ssh/

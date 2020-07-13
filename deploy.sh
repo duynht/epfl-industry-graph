@@ -54,5 +54,5 @@ mkdir data/truth \
     && unzip related_entities.zip -d data/truth/ \
     && rm related_entities
 
-docker build --tag industry-graph:0.1
+docker build --tag industry-graph:0.1 .
 docker run --squash -it -v $PWD:./ industry-graph
