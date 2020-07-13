@@ -55,4 +55,4 @@ mkdir data/truth \
     && rm related_entities
 
 docker build --tag industry-graph:0.1 .
-docker run --squash -it -v $PWD:./ industry-graph
+docker run --rm --squash -it -v $PWD:./ industry-graph
