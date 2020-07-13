@@ -22,19 +22,19 @@ RUN git clone https://github.com/kermitt2/entity-fishing \
     && for file in *.zip; do unzip $file; rm $file; done \
     && cd ../../../ \
 
-ARG SSH_PRIVATE_KEY
-RUN mkdir /root/.ssh/
-RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
+# ARG SSH_PRIVATE_KEY
+# RUN mkdir /root/.ssh/
+# RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
 
-RUN chmod 700 /root/.ssh/id_rsa
-RUN chown -R root:root /root/.ssh
+# RUN chmod 700 /root/.ssh/id_rsa
+# RUN chown -R root:root /root/.ssh
 
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+# RUN touch /root/.ssh/known_hosts
+# RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 RUN git clone git@github.com:duynht/epfl-industry-graph.git
 
-RUN rm /root/.ssh/id_rsa
+# RUN rm /root/.ssh/id_rsa
 
 CMD entity-fishing/gradlew appRun & python3 epfl-industry-graph/extract_entities.py
 

@@ -49,10 +49,9 @@ mkdir indeed \
     && rm indeed.zip
 cd ../../
 
-cd data/truth/
-mkdir truth \
+mkdir data/truth \
     && wget https://drive.switch.ch/index.php/s/m2sPKsRJO3KEO0x/download -O related_entities.zip \
-    && unzip related_entities.zip -d truth/ \
+    && unzip related_entities.zip -d data/truth/ \
     && rm related_entities
 
 docker build --tag industry-graph:0.1
