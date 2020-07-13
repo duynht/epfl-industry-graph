@@ -1,4 +1,3 @@
-FROM Ubuntu
 FROM floydhub/dl-docker:cpu
 
 RUN add-apt-repository ppa:openjdk-r/ppa
