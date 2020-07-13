@@ -11,7 +11,7 @@ RUN git clone https://github.com/kermitt2/grobid \
 && ./gradlew clean install \
 && git clone https://github.com/kermitt2/grobid-ner.git \
 && cp grobid-ner/resources/models/* grobid-home/models/ \
-&& ./gradlew clean install
+&& ./gradlew clean install \
 && cd ../../
 
 RUN git clone https://github.com/kermitt2/entity-fishing \
