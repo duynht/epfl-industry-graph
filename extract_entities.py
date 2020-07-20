@@ -1,83 +1,85 @@
-import pke
-import ast
 from glob import glob
 import os
 import json
 import requests
-import nltk
-from nltk.corpus import stopwords
-from nltk.corpus import words
-import aiohttp
-import asyncio
 from itertools import islice
-import uvloop
-import pickle
 
+def get_language(text):
+    url = 'http://localhost:8090/service/language?text='
+    url += text
 
-async def entity_fishing(text, is_title=False):
+    lang = "en"
+
+    with requests.get(url) as resp:
+        try:
+            resp.raise_for_status()
+            resp_json = resp.json()
+            lang = resp_json["lang"]
+        except requests.exceptions.HTTPError as e:
+            print(e.__class__, e.response, e.re.request, text)
+
+    return lang
+
+def entity_fishing(text):
     url = 'http://localhost:8090/service/disambiguate'
 
-    if is_title:
-        query = { "shortText": text}
-    else:
-        query = {"text": text}
+    query = {"text": text}    
 
-    query["language"] = {
-        "lang": "en",
-        "lang": "de",
-        "lang": "fr"
-    }    
+    lang = get_language(text)
+
+    query["language"] = {"lang":lang}        
     
     query["mentions"] = ["ner",  "wikipedia", "wikidata"]
 
     wikidata_ids = []
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=query, timeout=60) as resp:
-            try:
-                resp.raise_for_status()
-                anno = await resp.json()
-                if 'entities' in anno:
-                    entity_list = anno['entities']
-                    wikidata_ids = [entity['wikidataId'] for entity in entity_list if 'wikidataId' in entity]
-            except aiohttp.client_exceptions.ClientResponseError as e:
-                print(e.__class__, e.status, e.message, query)
+    # files = {"query" : query}
+
+    with requests.post(url, json=query) as resp:
+        try:
+            resp.raise_for_status()
+            resp_json = resp.json()
+            if 'entities' in resp_json:
+                entity_list = resp_json['entities']
+                wikidata_ids = [entity['wikidataId'] for entity in entity_list if 'wikidataId' in entity]
+        except requests.exceptions.HTTPError as e:
+            print(e.__class__, e.response, e.request, query)
     
     return wikidata_ids
 
-async def extract_patent(data, ):
+def extract_patent(data, ):
     entry = {
         'company_name': data['cleaned_name']
     }
 
-    title_fields = []
-    abstract_fields = []
-    if not (data['title'] == 'NULL'):
-        title_fields = await entity_fishing(data['title'], is_title=True)
-    if not (data['abstract'] == 'NULL'):
-        abstract_fields = await entity_fishing(data['abstract'])
+    content = ''
 
-    entry['fields'] = title_fields + abstract_fields
+    if not (data['title'] == 'NULL'):
+        content += data['title'] + '.'
+    if not (data['abstract'] == 'NULL'):
+        content += ' ' + data['abstract']
+
+    entry['fields'] = entity_fishing(content)
 
     return entry
 
-async def extract_indeed(data):
+def extract_indeed(data):
     entry = {
         'company_name': data['companyName'].lower()
     }
 
-    jt_fields = []
-    jd_fields = []
-    if not (data['jobTitle'] == 'NULL'):
-        jt_fields = await entity_fishing(data['jobTitle'], is_title=True)
-    if not (data['jobDescription'] == 'NULL'):
-        jd_fields = await entity_fishing(data['jobDescription'])
+    content = ''
 
-    entry['fields'] = jt_fields + jd_fields
+    if not (data['jobTitle'] == 'NULL'):
+        content += data['jobTitle'] + '.'
+    if not (data['jobDescription'] == 'NULL'):
+        content += ' ' + data['jobDescription']
+
+    entry['fields'] = entity_fishing(content)
 
     return entry
 
-async def async_extract_all():
+def extract_all(num_entries):
     output_dir = '../data/extracted/'
     raw_dir = '../data/raw/**'
     log_dir = 'log/'
@@ -107,9 +109,9 @@ async def async_extract_all():
 
                 line_slice = islice(content, start, end)
                 if filepath.split('/')[3] == 'indeed':
-                    entry_list = await asyncio.gather(*[extract_indeed(json.loads(line)) for line in line_slice])
+                    entry_list = [extract_indeed(json.loads(line)) for line in line_slice]
                 elif filepath.split('/')[3] == 'patent':
-                    entry_list = await asyncio.gather(*[extract_patent(json.loads(line)) for line in line_slice])
+                    entry_list = [extract_patent(json.loads(line)) for line in line_slice]
 
                 with open(log_dir + filepath.split('/')[3] + '/' + os.path.basename(filepath)+'-log.json', 'w', encoding='utf-8') as f:
                     f.write('CHECKPOINT: '+str(start+1)+'\n')
@@ -126,7 +128,13 @@ async def async_extract_all():
                     for elem in entry_list:
                         json.dump(elem, f)
                         f.write('\n')                                                                           
-             
 
+                if count >= num_entries:
+                    return
+
+import time
 if __name__ == '__main__':
-    asyncio.run(async_extract_all())
+    start = time.perf_counter()
+    extract_all(500)    
+    stop = time.perf_counter()
+    print(stop-start)

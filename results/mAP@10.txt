@@ -1,0 +1,1 @@
+field2company : mAP = 4.670660221717808e-05

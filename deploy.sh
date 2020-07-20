@@ -1,26 +1,26 @@
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-sudo apt-get update  
-sudo apt-get upgrade  
-sudo apt-get install build-essential cmake g++ gfortran git pkg-config python-dev software-properties-common wget
-sudo rm -rf /var/lib/apt/lists/*
+# sudo add-apt-repository \
+#    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+#    $(lsb_release -cs) \
+#    stable"
+# sudo apt-get update  
+# sudo apt-get upgrade  
+# sudo apt-get install build-essential cmake g++ gfortran git pkg-config python-dev software-properties-common wget
+# sudo rm -rf /var/lib/apt/lists/*
 
-# Install docker
-sudo apt-get remove docker docker-engine docker.io containerd runc
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common
+# # Install docker
+# sudo apt-get remove docker docker-engine docker.io containerd runc
+# curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+# sudo apt-get install \
+#     apt-transport-https \
+#     ca-certificates \
+#     curl \
+#     gnupg-agent \
+#     software-properties-common
 
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-sudo docker run hello-world
+# sudo apt-get install docker-ce docker-ce-cli containerd.io
+# sudo docker run hello-world
 
-sudo apt-get autoremove 
+# sudo apt-get autoremove 
 
 # # NVIDIA drivers
 # sudo add-apt-repository ppa:graphics-drivers/ppa
@@ -52,7 +52,9 @@ cd ../../
 mkdir data/truth \
     && wget https://drive.switch.ch/index.php/s/m2sPKsRJO3KEO0x/download -O related_entities.zip \
     && unzip related_entities.zip -d data/truth/ \
-    && rm related_entities
+    && rm related_entities.zip
+
+mkdir data/parsed-graph && mkdir data/embeddings
 
 docker build --tag industry-graph:0.1 .
 docker run --rm --squash -it -v $PWD:./ industry-graph

@@ -88,6 +88,7 @@ class Persona2Vec(Word2Vec):
 
   def __init__(self,
                sentences=None,
+               corpus_file=None,
                size=100,
                alpha=0.025,
                window=5,
@@ -160,6 +161,14 @@ class Persona2Vec(Word2Vec):
                   keep_raw_vocab=False,
                   trim_rule=None,
                   progress_per=10000):
+  # def build_vocab(self, 
+  #                 sentences=None,
+  #                 corpus_file=None,
+  #                 update=False,
+  #                 progress_per=10000,
+  #                 keep_raw_vocab=False, 
+  #                 trim_rule=None, 
+  #                 **kwargs):
     """
         Build vocabulary from a sequence of sentences (can be a once-only
         generator stream).

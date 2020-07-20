@@ -1,0 +1,8 @@
+gensim
+numpy
+pandas
+faiss-cpu
+faiss-gpu
+flask
+flask_wtf
+flask_ngrok

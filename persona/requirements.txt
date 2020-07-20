@@ -2,4 +2,5 @@ numpy
 absl-py
 networkx
 boltons
-scipy==0.18.1
+scipy
+gensim

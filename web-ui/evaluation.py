@@ -47,16 +47,16 @@ class Evaluator:
     def __init__(self, top_k, use_gpu=False):
         self.top_k = top_k
 
-        with open('~/data/parsed-graph/node_type_dict.pkl','rb') as f:
+        with open('../../data/parsed-graph/node_type_dict.pkl','rb') as f:
             self.node_type_dict = pickle.load(f)
 
-        with open('~/data/parsed-graph/node_dict.pkl','rb') as f:
+        with open('../../data/parsed-graph/node_dict.pkl','rb') as f:
             self.node_dict = pickle.load(f)
 
-        with open('~/data/parsed-graph/str2id_dict.pkl','rb') as f:
+        with open('../../data/parsed-graph/str2id_dict.pkl','rb') as f:
             self.inv_node_dict = pickle.load(f)
 
-        with open('~/data/embeddings/persona_map.txt','r') as f:
+        with open('../../data/embeddings/persona_map.txt','r') as f:
             for line in f:
                 persona_node, original_node = map(int, line.split())
 
@@ -66,7 +66,7 @@ class Evaluator:
                 if original_node not in self.inv_persona_map:
                     self.inv_persona_map[original_node] = original_node
                 
-        self.persona_emb = wv.load_word2vec_format('~/data/embeddings/persona.embedding')
+        self.persona_emb = wv.load_word2vec_format('../../data/embeddings/persona.embedding')
    
         for node_type in NodeType:    
             self.db_index[node_type] =  faiss.IndexFlatL2(self.persona_emb.vector_size)
@@ -82,10 +82,10 @@ class Evaluator:
             db = np.array(embs)
             self.db_index[node_type].add(db)
 
-        self.load_truth(filepath='~/data/truth/company_related_company.json', src_type='company', dst_type='company')
-        self.load_truth(filepath='~/data/truth/company_related_technology.json', src_type='company', dst_type='field')
-        self.load_truth(filepath='~/data/truth/technology_company.json', src_type='field', dst_type='company')
-        self.load_truth(filepath='~/data/truth/technology_resinst.json', src_type='field', dst_type='company')    
+        self.load_truth(filepath='../../data/truth/company_related_company.json', src_type='company', dst_type='company')
+        self.load_truth(filepath='../../data/truth/company_related_technology.json', src_type='company', dst_type='field')
+        self.load_truth(filepath='../../data/truth/technology_company.json', src_type='field', dst_type='company')
+        self.load_truth(filepath='../../data/truth/technology_resinst.json', src_type='field', dst_type='company')    
 
         for query_type in QueryType:
             for key in self.evaluate_list[query_type]:
