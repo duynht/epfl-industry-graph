@@ -11,17 +11,25 @@ from enum import Enum
 import re
 import faiss
 import requests
+# import wptools
 
 
 def concept_lookup(id):
+    concept = 'unknown'
     url = 'http://localhost:8090/service/kb/concept/'+id
     with requests.get(url) as resp:
         try:
             resp.raise_for_status()
-            anno = resp.json()
-            concept = anno['preferredName']
+            try:
+                anno = resp.json()
+                try:
+                    concept = anno['preferredName']
+                except KeyError as e:
+                    print(e.__class__, e, anno)
+            except json.decoder.JSONDecodeError as e:
+                print(e.__class__, e, resp.text)
         except requests.exceptions.HTTPError as e:
-            print(e, e.response, e.re.request, text)
+            print(e.__class__, e, e.response, e.re.request, text)
     
     return concept.lower()
 
@@ -29,34 +37,42 @@ def term_lookup(term):
     url = 'http://localhost:8090/service/kb/term/'+term 
     url = url.encode()
 
+    wikidataId = 'NULL'
+    pageid = None
+
     with requests.get(url) as resp:
         try:
             resp.raise_for_status()
             try:
                 anno = resp.json()
+                try:
+                    pageid = anno['senses'][0]['pageid']
+                except IndexError as e:
+                    print(e.__class__, e, anno)
             except json.decoder.JSONDecodeError as e:
-                print(e)
-                return 'NULL'
-            if len(anno['senses']) > 0:
-                pageid = anno['senses'][0]['pageid']
-            else:
-                return 'NULL'
+                print(e.__class__, e, resp.text)             
         except requests.exceptions.HTTPError as e:
-            print(e, e.response, e.re.request, text)
+            print(e.__class__, e, e.response, e.re.request, text)
 
-    url = 'http://localhost:8090/service/kb/concept/'+str(pageid)
-    with requests.get(url) as resp:
-        try:
-            resp.raise_for_status()
-            anno = resp.json()
-            if 'wikidataId' in anno:
-                wikidataId = anno['wikidataId']
-            else:
-                return 'NULL'
-        except requests.exceptions.HTTPError as e:
-            print(e, e.response, e.re.request, text)
+    if pageid:
+        url = 'http://localhost:8090/service/kb/concept/'+str(pageid)
+        with requests.get(url) as resp:
+            try:
+                resp.raise_for_status()
+                anno = resp.json()
+                try:
+                    wikidataId = anno['wikidataId']
+                except KeyError as e:
+                    print(e.__class__, e, anno)
+            except requests.exceptions.HTTPError as e:
+                print(e, e.response, e.re.request, text)
     
     return wikidataId
+
+# def get_wikidataId(term):
+#     page = wptools.page(term).get_parse()
+#     wikidataId = page.data['wikibase']
+#     return wikidataId
 
 class NodeType(Enum):
     company = 0
@@ -157,7 +173,7 @@ class Evaluator:
                     data = json.loads(line)
                     for key, entries in data.items():
                         if isinstance(entries, list):
-                            key = key.lower().replace('_', ' ')
+                            key = key.replace('_', ' ')
 
                             self.evaluate_set[query_type][key] = self.evaluate_set[query_type][key].union(
                                 {entry['value']['name'].lower().replace('_', ' ') for entry in entries}
@@ -170,11 +186,11 @@ class Evaluator:
 
     def evaluate_node(self, ori_node_str, src_type, dst_type, zefix_uid = None):        
         # node_str = ' '.join(re.sub(r'[^a-zA-Z\d,]',' ', node_str.lower()).split())
-        ori_node_str = ori_node_str.lower().replace('_', ' ')
+        ori_node_str = ori_node_str.replace('_', ' ')
         node_str = ori_node_str
 
         if src_type.name == 'field':
-            node_str = term_lookup(node_str)
+            node_str = term_lookup(ori_node_str)
 
         query_type = QueryType[src_type.name+'2'+dst_type.name]
 

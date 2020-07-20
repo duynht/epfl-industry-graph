@@ -49,12 +49,16 @@ mkdir indeed \
     && rm indeed.zip
 cd ../../
 
-mkdir data/truth \
-    && wget https://drive.switch.ch/index.php/s/m2sPKsRJO3KEO0x/download -O related_entities.zip \
-    && unzip related_entities.zip -d data/truth/ \
-    && rm related_entities.zip
+wget https://drive.switch.ch/index.php/s/m2sPKsRJO3KEO0x/download -O related_entities.zip \
+    && unzip related_entities.zip -d data/ \
+    && rm related_entities.zip \
+    && mv data/groundtruth data/truth \
+    && unzip data/truth/related_entities.zip \
+    && rm data/truth/related_entities.zip \
+    && mv data/truth/data_output/* data/truth/ \
+    && rm -r data/truth/data_output
 
 mkdir data/parsed-graph && mkdir data/embeddings
 
-docker build --tag industry-graph:0.1 .
-docker run --rm --squash -it -v $PWD:./ industry-graph
+docker build --tag industry-graph .
+docker run --rm -it -v $PWD:./ industry-graph

@@ -9,3 +9,8 @@ This repo hosts the source code for EPFL Industry Graph Project
 [WEB DEMO](https://cac409bfd0bf.ngrok.io/)
 
 **Note:** Erase ZEFIX UID when query source is 'field'
+
+## Current settings
+| Extraction | Embedding | Index/Similarity |
+|:---:|:---:|:---:|
+|entity-fishing mentions=["wikidata", "wikipedia"] | persona-embedding 128  | CPU IndexFlatL2 |

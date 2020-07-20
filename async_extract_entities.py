@@ -1,9 +1,11 @@
+import argparse
 from glob import glob
 import os
 import json
 import aiohttp
 import asyncio
 from itertools import islice
+import uvloop
 
 
 async def get_language(text):
@@ -37,7 +39,7 @@ async def entity_fishing(text):
 
     query["language"] = {"lang":lang}        
     
-    query["mentions"] = ["ner",  "wikipedia", "wikidata"]
+    query["mentions"] = ["wikipedia", "wikidata"]
 
     wikidata_ids = []
 
@@ -138,14 +140,27 @@ async def async_extract_all(datasets, num_entries):
                         json.dump(elem, f)
                         f.write('\n')                                                                           
 
-                if count > num_entries:
-                    return
-                else:
-                    print(count, '/', num_entries)
+                if num_entries:
+                    if count > num_entries:
+                        return
+                    else:
+                        print(count, '/', num_entries)
 
 import time
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--num_entries', 
+                        default=None,
+                        type=int,
+                        help='number of entries to be extracted')
+
+    args = parser.parse_args()
+
+    num_entries = args.num_entries
+
+    uvloop.install()
     start = time.perf_counter()
-    asyncio.run(async_extract_all({'indeed', 'patent'},1000))
+    asyncio.run(async_extract_all({'indeed', 'patent'}, num_entries))
     stop = time.perf_counter()
     print(stop-start)
+    print('Done extracting!')

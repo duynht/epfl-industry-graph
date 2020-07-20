@@ -1,4 +1,4 @@
-python3 extract_entities.py
+python3 async_extract_entities.py
 
 python3 graph_parser.py 
 
@@ -9,7 +9,7 @@ python3 Splitter/src/main.py --edge-path ../data/parsed-graph/pt_graph.csv \
 
 cd web-ui
 
-python pt_evaluation.py
+python3 pt_evaluation.py
 
-python main.py
+python3 main.py
 

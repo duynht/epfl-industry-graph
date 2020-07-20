@@ -1,3 +1,4 @@
+import argparse
 import pickle
 import json
 import os
@@ -5,17 +6,15 @@ from glob import glob
 import csv
 
 
-def get_node_id(node_dict, key):
+def get_node_id(node_counter, node_dict, key):
     if not (key in node_dict):
-        global node_counter #self
+        # global node_counter #self
         node_counter += 1 
         node_dict[key] = node_counter
     
-    return node_dict[key]
+    return node_counter, node_dict[key]
 
-if __name__ == '__main__':
-    
-    num_entries = 1000
+def parse_graph(num_nodes):
     node_counter = -1
     node_dict = {}
     node_type_dict = {}
@@ -26,26 +25,20 @@ if __name__ == '__main__':
         if os.path.isdir(filepath): continue
         with open(filepath,encoding='utf-8') as f:
             for line in f:       
-                # if not line:
-                #     break
-
-                # if line_num == num_entries:
-                #     break
 
                 data = json.loads(line)
                 if data['fields']:
-                    company_node = get_node_id(node_dict, data['company_name'])
+                    node_counter, company_node = get_node_id(node_counter, node_dict, data['company_name'])
                     node_type_dict[company_node] = 'company'
 
                     for field in data['fields']:
-                        field_node = get_node_id(node_dict, field)
+                        node_counter, field_node = get_node_id(node_counter, node_dict, field)
                         edge_list.append((company_node, field_node)) # already assumed undirected
                         node_type_dict[field_node] = 'field'
                     
-                    # REMOVE THIS
-                    if node_counter + 2 >= num_entries:
+                    if num_nodes and node_counter + 2 >= num_nodes:
                         break
-        if node_counter + 2 >= num_entries:
+        if num_nodes and node_counter + 2 >= num_nodes:
             break
 
     print(node_counter + 2)
@@ -70,3 +63,16 @@ if __name__ == '__main__':
     with open('../data/parsed-graph/pt_node_type_dict.pkl','wb') as f:
         pickle.dump(node_type_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--num_nodes', 
+                        default=None,
+                        type=int,
+                        help='number of nodes to be parsed')
+
+    args = parser.parse_args()
+
+    num_nodes = args.num_nodes
+
+    parse_graph(num_nodes)
+    print('Done parsing!')

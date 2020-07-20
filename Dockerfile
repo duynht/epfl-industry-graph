@@ -1,5 +1,6 @@
-FROM pytorch/pytorch
-
+FROM floydhub/pytorch
+# gcr.io/deeplearning-platform-release/pytorch-gpu.1-1
+RUN apt-get install software-properties-common
 RUN add-apt-repository ppa:openjdk-r/ppa
 RUN apt-get update
 RUN apt-get install -y git
