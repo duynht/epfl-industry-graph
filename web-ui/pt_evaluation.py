@@ -215,8 +215,7 @@ class Evaluator:
         else:
             if node_str not in self.inv_node_dict:
                 if zefix_uid is not None:
-                    zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.lower())
-                    node_str = zefix_uid
+                    zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.upper())
                     ori_node_str = zefix_uid
                 
                 # import pdb; pdb.set_trace()
@@ -225,11 +224,10 @@ class Evaluator:
                 else:
                     return 0, 0, [], [name for _, name in self.evaluate_list[query_type][ori_node_str][:self.top_k]]
 
-            node_id = self.inv_node_dict[node_str]
+            node_id = self.inv_node_dict[node_str.lower()]
 
             if zefix_uid is not None:
-                zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.lower())
-                node_str = zefix_uid
+                zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.upper())
             
             num_persona = len(self.persona_map[node_id])
 
