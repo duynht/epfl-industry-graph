@@ -198,6 +198,8 @@ class Evaluator:
 
         query_type = QueryType[src_type.name+'2'+dst_type.name]
 
+        node_str = node_str.lower()
+
         if query_type.name == 'field2field':
             node_id = self.inv_node_dict[node_str]
             
@@ -228,7 +230,7 @@ class Evaluator:
                 else:
                     return 0, 0, [], [name for _, name in self.evaluate_list[query_type][ori_node_str][:self.top_k]]
 
-            node_id = self.inv_node_dict[node_str.lower()]
+            node_id = self.inv_node_dict[node_str]
 
             if zefix_uid is not None:
                 zefix_uid = re.sub(r'[^a-zA-Z\d]','', zefix_uid.upper())
