@@ -1,4 +1,4 @@
-FROM floydhub/pytorch
+FROM floydhub/pytorch:1.5.0-gpu.cuda10cudnn7-py3.55
 # gcr.io/deeplearning-platform-release/pytorch-gpu.1-1
 RUN apt-get install software-properties-common
 RUN add-apt-repository ppa:openjdk-r/ppa
@@ -44,6 +44,8 @@ RUN cd epfl-industry-graph
 RUN pip install -r requirements.txt
 
 CMD ../entity-fishing/gradlew appRun & bash
+
+# sh experiment.sh
 
 
 

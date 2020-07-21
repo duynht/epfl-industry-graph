@@ -1,4 +1,4 @@
-python3 async_extract_entities.py
+python3 async_extract_entities.py -n 100000
 
 python3 graph_parser.py 
 
