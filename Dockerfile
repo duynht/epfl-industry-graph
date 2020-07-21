@@ -41,10 +41,9 @@ RUN git clone https://github.com/duynht/epfl-industry-graph.git
 
 # RUN rm /root/.ssh/id_rsa
 
-RUN cd epfl-industry-graph
-RUN pip install -r requirements.txt
+RUN pip install -r epfl-industry-graph/requirements.txt
 
-CMD ../entity-fishing/gradlew appRun & bash
+RUN entity-fishing/gradlew appRun & bash
 
 # sh experiment.sh
 
