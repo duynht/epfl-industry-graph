@@ -11,7 +11,7 @@ from enum import Enum
 import re
 import faiss
 import requests
-# import wptools
+import argparse
 
 
 def concept_lookup(id):
@@ -93,16 +93,20 @@ class Evaluator:
     index_map = defaultdict(list)
     persona_emb = {}
 
-    def __init__(self, top_k, use_gpu=False):
+    def __init__(self, datapath, top_k, use_gpu=False):
+        graph_dir = os.path.join(datapath, 'parsed-graph')
+        emb_dir = os.path.join(datapath, 'embeddings')
+        truth_dir = os.path.join(datapath, 'truth')
+
         self.top_k = top_k
 
-        with open('../../data/parsed-graph/pt_node_type_dict.pkl','rb') as f:
+        with open(os.path.join(graph_dir,'pt_node_type_dict.pkl'),'rb') as f:
             self.node_type_dict = pickle.load(f)
 
-        with open('../../data/parsed-graph/pt_node_dict.pkl','rb') as f:
+        with open(os.path.join(graph_dir, 'pt_node_dict.pkl'),'rb') as f:
             self.node_dict = pickle.load(f)
 
-        with open('../../data/parsed-graph/pt_str2id_dict.pkl','rb') as f:
+        with open(os.path.join(graph_dir, 'pt_str2id_dict.pkl'),'rb') as f:
             self.inv_node_dict = pickle.load(f)
 
         # with open('~/data/embeddings/persona_map.txt','r') as f:
@@ -130,7 +134,7 @@ class Evaluator:
             
         #     db = np.array(embs)
         #     self.db_index[node_type].add(db)
-        with open('../../data/embeddings/pt_persona_map.json', 'r') as f:
+        with open(os.path.join(emb_dir, 'pt_persona_map.json'), 'r') as f:
             self.inv_persona_map = json.load(f)
         self.inv_persona_map = {int(key):int(value) for key, value in self.inv_persona_map.items()}
         for persona_node, original_node in self.inv_persona_map.items():
@@ -138,7 +142,7 @@ class Evaluator:
             # if original_node not in self.persona_map[original_node]:
             #     self.persona_map[original_node].add(original_node)
 
-        self.persona_emb_df = pd.read_csv('../../data/embeddings/persona_embedding.csv')
+        self.persona_emb_df = pd.read_csv(os.path.join(emb_dir, 'persona_embedding.csv'))
         self.persona_emb_df.set_index('id')
         
         for node_type in NodeType:  
@@ -156,10 +160,10 @@ class Evaluator:
             db = np.array(embs)
             self.db_index[node_type].add(db)
 
-        self.load_truth(filepath='../../data/truth/company_related_company.json', src_type='company', dst_type='company')
-        self.load_truth(filepath='../../data/truth/company_related_technology.json', src_type='company', dst_type='field')
-        self.load_truth(filepath='../../data/truth/technology_company.json', src_type='field', dst_type='company')
-        self.load_truth(filepath='../../data/truth/technology_resinst.json', src_type='field', dst_type='company')    
+        self.load_truth(os.path.join(truth_dir, 'company_related_company.json'), src_type='company', dst_type='company')
+        self.load_truth(os.path.join(truth_dir, 'company_related_technology.json'), src_type='company', dst_type='field')
+        self.load_truth(os.path.join(truth_dir, 'technology_company.json'), src_type='field', dst_type='company')
+        self.load_truth(os.path.join(truth_dir, 'technology_resinst.json'), src_type='field', dst_type='company')    
 
         for query_type in QueryType:
             for key in self.evaluate_list[query_type]:
@@ -257,11 +261,39 @@ class Evaluator:
 
 
 if __name__ == "__main__":
-    eval = Evaluator(top_k = 10)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--datapath', 
+                        default='../../data',
+                        type=str,
+                        help='path to data directory (default is "../../data")')
+    
+    parser.add_argument('-rp', '--result_path', 
+                        default='../results',
+                        type=str,
+                        help='path to result directory (default is "../results")')
+    
+    parser.add_argument('-k', '--top_k', 
+                        default=10,
+                        type=int,
+                        help='top k nearest neighbors (default is 10)')
+
+    parser.add_argument('-gpu', '--use_gpu',
+                        default=False,
+                        action='store_true',
+                        help='use GPU for indexing (defaulted to not using)')
+
+    args = parser.parse_args()
+
+
+    if not os.path.exists(args.result_path):
+        os.makedirs(args.result_path)
+
+
+    eval = Evaluator(datapath=args.datapath, top_k=args.top_k, use_gpu=args.use_gpu)
 
     evaluation_result = {}
 
-    with open('../results/mAP@10.txt', 'w') as f:
+    with open(os.path.join(args.result_path, 'mAP@10.txt'), 'w') as f:
         for src_type in NodeType:
             for dst_type in NodeType:
                 if (src_type.name == 'company'):
@@ -285,4 +317,4 @@ if __name__ == "__main__":
                 
                 f.write(''.join([query_type.name,' : mAP = ', str(mAP)]))
     
-    json.dump(evaluation_result, open('../results/evaluation_result.json', 'w', encoding='utf-8'), indent=2)
+    json.dump(evaluation_result, open(os.path.join(args.result_path, 'evaluation_result.json'), 'w', encoding='utf-8'), indent=2)

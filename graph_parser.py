@@ -14,13 +14,14 @@ def get_node_id(node_counter, node_dict, key):
     
     return node_counter, node_dict[key]
 
-def parse_graph(num_nodes):
+def parse_graph(datapath, num_nodes):
     node_counter = -1
     node_dict = {}
     node_type_dict = {}
     edge_list = []
-    raw_path = '../data/extracted/**'
-    for filepath in sorted(glob(raw_path, recursive=True)):
+    extracted_path = os.path.join(datapath, 'extracted/**')
+
+    for filepath in sorted(glob(extracted_path, recursive=True)):
         print(filepath)
         if os.path.isdir(filepath): continue
         with open(filepath,encoding='utf-8') as f:
@@ -46,21 +47,30 @@ def parse_graph(num_nodes):
     # with open('../data/parsed-graph/_graph.txt','w') as f:
     #     for edge in edge_list:
     #         f.write('{0} {1}\n'.format(edge[0], edge[1]))
+
+    output_dir = os.path.join(datapath,'parsed-graph')
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     
-    with open('../data/parsed-graph/pt_graph.csv','w') as f:
+    filepath = os.path.join(output_dir, 'pt_graph.csv')
+    with open(filepath,'w') as f:
         csv_writer = csv.writer(f)
         csv_writer.writerow(['id1','id2'])
         for edge in edge_list:
             csv_writer.writerow(edge)
 
-    with open('../data/parsed-graph/pt_str2id_dict.pkl', 'wb') as f:
+    filepath = os.path.join(output_dir, 'pt_str2id_dict.pkl')
+    with open(filepath, 'wb') as f:
         pickle.dump(node_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     node_dict = {value : key for key, value in node_dict.items()}
-    with open('../data/parsed-graph/pt_node_dict.pkl','wb') as f:
+    filepath = os.path.join(output_dir, 'pt_node_dict.pkl')
+    with open(datapath,'wb') as f:
         pickle.dump(node_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-    with open('../data/parsed-graph/pt_node_type_dict.pkl','wb') as f:
+    filepath = os.path.join(output_dir, 'pt_node_type_dict.pkl')
+    with open(datapath,'wb') as f:
         pickle.dump(node_type_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
@@ -68,11 +78,14 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num_nodes', 
                         default=None,
                         type=int,
-                        help='number of nodes to be parsed')
+                        help='number of nodes to be parsed (defaulted to parse all)')
+    
+    parser.add_argument('-d', '--datapath', 
+                        default='../data',
+                        type=str,
+                        help='path to data directory (default is "../data")')
 
     args = parser.parse_args()
 
-    num_nodes = args.num_nodes
-
-    parse_graph(num_nodes)
+    parse_graph(args.datapath, args.num_nodes)
     print('Done parsing!')

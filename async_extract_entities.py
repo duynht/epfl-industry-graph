@@ -88,9 +88,9 @@ async def extract_indeed(data):
 
     return entry
 
-async def async_extract_all(datasets, num_entries):
-    output_dir = '../data/extracted/'
-    raw_dir = '../data/raw/**'
+async def async_extract_all(datapath, datasets, num_entries):
+    output_dir = os.path.join(datapath, 'extracted/')
+    raw_dir = os.path.join(datapath, 'raw/**')
     log_dir = 'log/'
 
     batch_size = 500
@@ -100,11 +100,19 @@ async def async_extract_all(datasets, num_entries):
 
     count = 0
 
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
     for filepath in sorted(glob(raw_dir, recursive=True), reverse=True):
         print(filepath)
         if os.path.isdir(filepath): continue
-        if filepath.split('/')[3] not in datasets: continue
-        if filepath.split('/')[-1] == '_SUCCESS': continue
+        current_ds = filepath.split('/')[-2]
+        filename = os.path.basename(filepath)
+        if current_ds not in datasets: continue
+        if filename == '_SUCCESS': continue
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.readlines()
             print(len(content))
@@ -117,14 +125,16 @@ async def async_extract_all(datasets, num_entries):
                 count += end - start
 
                 line_slice = islice(content, start, end)
-                if filepath.split('/')[3] == 'indeed':
+                
+
+                if current_ds == 'indeed':
                     entry_list = await asyncio.gather(*[extract_indeed(json.loads(line)) for line in line_slice], return_exceptions=True)
-                elif filepath.split('/')[3] == 'patent':
+                elif current_ds == 'patent':
                     entry_list = await asyncio.gather(*[extract_patent(json.loads(line)) for line in line_slice],  return_exceptions=True)
 
                 entry_list = [entry for entry in entry_list if not issubclass(type(entry), Exception)]
 
-                with open(log_dir + filepath.split('/')[3] + '/' + os.path.basename(filepath)+'-log.json', 'w', encoding='utf-8') as f:
+                with open(os.path.join(log_dir,current_ds,filename+'-log.json'), 'w', encoding='utf-8') as f:
                     f.write('CHECKPOINT: '+str(start+1)+'\n')
                     for elem in entry_list:
                         json.dump(elem, f, indent=2)
@@ -135,7 +145,7 @@ async def async_extract_all(datasets, num_entries):
                     write_mode = 'w'
                 else:
                     write_mode = 'a'
-                with open(output_dir + filepath.split('/')[3] + '/' + os.path.basename(filepath)+'-extracted.json', write_mode, encoding='utf-8') as f:
+                with open(os.path.join(output_dir,current_ds,filename+'-extracted.json'), write_mode, encoding='utf-8') as f:
                     for elem in entry_list:
                         json.dump(elem, f)
                         f.write('\n')                                                                           
@@ -152,15 +162,18 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num_entries', 
                         default=None,
                         type=int,
-                        help='number of entries to be extracted')
+                        help='number of entries to be extracted (defaulted to extract all)')
+    
+    parser.add_argument('-d', '--datapath', 
+                        default='../data',
+                        type=str,
+                        help='path to data directory (default is "../data")')
 
     args = parser.parse_args()
 
-    num_entries = args.num_entries
-
     uvloop.install()
     start = time.perf_counter()
-    asyncio.run(async_extract_all({'indeed', 'patent'}, num_entries))
+    asyncio.run(async_extract_all(args.datapath, {'indeed', 'patent'}, args.num_entries))
     stop = time.perf_counter()
     print(stop-start)
     print('Done extracting!')
