@@ -1,0 +1,10 @@
+networkx
+python-louvain
+tqdm
+numpy
+pandas
+texttable
+scipy
+argparse
+torch==1.1.0
+gensim==3.6.0
