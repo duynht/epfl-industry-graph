@@ -66,11 +66,11 @@ def parse_graph(datapath, num_nodes):
 
     node_dict = {value : key for key, value in node_dict.items()}
     filepath = os.path.join(output_dir, 'pt_node_dict.pkl')
-    with open(datapath,'wb') as f:
+    with open(filepath,'wb') as f:
         pickle.dump(node_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     filepath = os.path.join(output_dir, 'pt_node_type_dict.pkl')
-    with open(datapath,'wb') as f:
+    with open(filepath,'wb') as f:
         pickle.dump(node_type_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
