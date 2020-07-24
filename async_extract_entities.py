@@ -102,14 +102,23 @@ async def async_extract_all(datapath, datasets, num_entries):
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    for ds in datasets:
+        p = os.path.join(output_dir, ds)
+        if not os.path.exists(p):
+            os.makedirs(p)
 
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
+    for ds in datasets:
+        p = os.path.join(log_dir,ds)
+        if not os.path.exists(p):
+            os.makedirs(p)
 
     for filepath in sorted(glob(raw_dir, recursive=True), reverse=True):
         print(filepath)
         if os.path.isdir(filepath): continue
-        current_ds = filepath.split('/')[-2]
+        paths = filepath.split('/')
+        current_ds = paths[paths.index('raw')+1]
         filename = os.path.basename(filepath)
         if current_ds not in datasets: continue
         if filename == '_SUCCESS': continue
@@ -173,7 +182,7 @@ if __name__ == '__main__':
 
     uvloop.install()
     start = time.perf_counter()
-    asyncio.run(async_extract_all(args.datapath, {'indeed', 'patent'}, args.num_entries))
+    asyncio.run(async_extract_all(args.datapath, ['indeed'], args.num_entries))
     stop = time.perf_counter()
     print(stop-start)
     print('Done extracting!')
