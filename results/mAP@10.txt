@@ -1,0 +1,1 @@
+company2company : mAP = 0.00023772959559940012company2field : mAP = 0.0field2company : mAP = 0.0

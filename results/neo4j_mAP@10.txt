@@ -1,0 +1,14 @@
+{
+  "company2company": {
+    "mAP": 0.00023772959559940012,
+    "mAP_over_matched": 0.13365853658536614
+  },
+  "company2field": {
+    "mAP": 0.0005646777173488806,
+    "mAP_over_matched": 0.14245076586433347
+  },
+  "field2company": {
+    "mAP": 0.0020983031407077702,
+    "mAP_over_matched": 0.12292490118577161
+  }
+}
