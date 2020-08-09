@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <div class="form-group">
+                    {{ form.query_type.label(class="form-control-label") }}
+                    {{ form.query_type(class="form-control")}}                    
+                </div>
+                <div class="form-group">
+                    {{ form.node.label(class="form-control-label") }}
+                    {{ form.node(class="form-control")}}                    
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+
+            <div>
+                <table class="table">
+                    <tr>
+                        <th scope="col">Precision</th>
+                        <th scope="col">Recall</th>
+                        <th scope="col">10 Nearest Neighbors</th>
+                        <th scope="col">Top-10 Ground Truth</th>
+                    </tr>
+                    <tr>
+                        <td>{{data['precision']}}</td>
+                        <td>{{data['recall']}}</td>
+                        <td>
+                            <ol>
+                                {% for neighbor in data['neighbors'] %}
+                                <li>{{neighbor}}</li>
+                                {% endfor %}
+                            </ol>
+                        </td>
+                        <td>
+                            <ol>
+                                {% for neighbor in data['ground truth'] %}
+                                <li>{{neighbor}}</li>
+                                {% endfor %}
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}

@@ -1,11 +1,10 @@
 import os
+from glob import glob
 from collections import defaultdict
 from enum import Enum
 from py2neo import Database, Graph, Node, Relationship
 import argparse
 import json
-import dask
-from dask.diagnostics import ProgressBar
 
 class NodeType(Enum):
     company = 0
@@ -25,6 +24,8 @@ class Neo4jEvaluator:
 
         self.evaluate_set = defaultdict(lambda: defaultdict(set))
         self.evaluate_list = defaultdict(lambda: defaultdict(list))
+
+        self.register_dict = self.get_register_dict(datapath)
         
         truth_dir = os.path.join(datapath, 'truth')
 
@@ -61,6 +62,29 @@ class Neo4jEvaluator:
     
                 except ValueError as e:
                     pass 
+
+    def get_register_dict(self, datapath):        
+        register_path = os.path.join(datapath, 'truth/register/*')
+
+        register_dict = defaultdict(lambda: 'Unknown')
+
+        for filepath in sorted(glob(register_path, recursive=True)):
+            if os.path.isdir(filepath): continue
+            with open(filepath, encoding='utf-8') as f:
+                for line in f:
+                    data = json.loads(line)
+                    register_dict[data['uid']] = data['address']['organisation']
+
+        return register_dict
+
+    def get_eval_field2company(self):
+        return [(key, key) for key in self.evaluate_set[QueryType.field2company].keys()]
+    
+    def get_eval_company2company(self):
+        return [(key, self.register_dict[key]) for key in self.evaluate_set[QueryType.company2company].keys()]
+
+    def get_eval_company2field(self):
+        return [(key, self.register_dict[key]) for key in self.evaluate_set[QueryType.company2field].keys()]
 
     def company_to_company(self, zefix_uid):
         query = """MATCH (:Company {{uid: "{zefix_uid}"}})-[:WORKS_ON]->(:Field)<-[:WORKS_ON]-(dst:Company)

@@ -19,3 +19,4 @@ flask_wtf
 flask_ngrok
 dask[complete]
 wptools
+py2neo
