@@ -6,3 +6,4 @@ faiss-gpu
 flask
 flask_wtf
 flask_ngrok
+matplotlib

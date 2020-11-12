@@ -5,6 +5,19 @@ import os
 from glob import glob
 import csv
 
+def get_register_dict(datapath):        
+    register_path = os.path.join(datapath, 'truth/register/*')
+
+    register_dict = defaultdict(lambda: 'Unknown')
+
+    for filepath in sorted(glob(register_path, recursive=True)):
+        if os.path.isdir(filepath): continue
+        with open(filepath, encoding='utf-8') as f:
+            for line in f:
+                data = json.loads(line)
+                register_dict[data['address']['organisation'].lower()] = data['uid'] 
+
+    return register_dict
 
 def get_node_id(node_counter, node_dict, key):
     if not (key in node_dict):

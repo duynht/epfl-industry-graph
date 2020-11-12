@@ -5,6 +5,7 @@ from enum import Enum
 from py2neo import Database, Graph, Node, Relationship
 import argparse
 import json
+from matplotlib import pyplot as plt
 
 class NodeType(Enum):
     company = 0
@@ -199,6 +200,34 @@ class Neo4jEvaluator:
     #         # import pdb; pdb.set_trace()
     #         return precision, recall, neighbors, [name for _, name in self.evaluate_list[query_type][ori_node_str][:self.top_k]]
 
+def plot_pr(pr_dict, top_k):
+    # textstr = 'mAP@10={mAP:.2f} \nmatched_mAP@10={mOM:.2f}'.format(mAP=mAP, mOM=mAP_over_matched)
+    color_list = ['red', 'green', 'blue']
+    line_list = []
+    label_list = []
+    for query_type, color in zip(pr_dict.keys(), color_list):
+        precision_list = pr_dict[query_type]['precision']
+        recall_list = pr_dict[query_type]['recall']
+        precision_list = [precision for _,precision in sorted(zip(recall_list, precision_list))]
+        recall_list = sorted(recall_list)
+        l, = plt.step(recall_list, precision_list, color=color, alpha=0.7)
+        line_list.append(l)
+        # label_list.append('{query_type} (mAP = {mAP:.2f} mAPofMatched = {mAPofMatched:.2f}'
+        #                     .format(query_type = query_type,
+        #                             mAP=pr_dict[query_type]['mAP'],
+        #                             mAPofMatched=pr_dict[query_type]['mAPofMatched']))
+        label_list.append(query_type)
+
+    fig = plt.gcf()
+    fig.subplots_adjust(bottom=0.25)
+    plt.xlabel('Recall@{top_k}'.format(top_k=top_k))
+    plt.ylabel('Precision@{top_k}'.format(top_k=top_k))
+    plt.ylim([0.0, 0.65])
+    plt.xlim([0.0, 0.65])
+    # fig.title('Precision-recall @ {top_k}')
+    # plt.text(0.05, 0.95, textstr)
+    plt.legend(line_list, label_list, loc=(0, -.42), prop=dict(size=10))
+    plt.savefig('neo4j_prcurve_{top_k}.pdf'.format(top_k=top_k))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -234,7 +263,7 @@ if __name__ == "__main__":
 
     evaluation_result = {}
 
-    mAP_dict = {}
+    pr_dict = {}
 
     for src_type in NodeType:
         for dst_type in NodeType:
@@ -246,8 +275,14 @@ if __name__ == "__main__":
             cum_prec = 0
             matched_count = 0
             query_result = {}
+            pr_dict[query_type.name] = {}
+            pr_dict[query_type.name]['precision'] = []
+            pr_dict[query_type.name]['recall'] = []
             for node_id in list(eval.evaluate_set[query_type].keys()):
                 precision, recall, neighbors, ground_truth = eval.evaluate_node(query_type, node_id)
+                pr_dict[query_type.name]['precision'].append(precision)
+                pr_dict[query_type.name]['recall'].append(recall)
+
                 if precision > 0.0 or recall > 0.0:
                     query_result[node_id] = {'precision' : precision, 'recall' : recall, 'neighbors' : neighbors, 'ground truth' : ground_truth}
                     matched_count += 1
@@ -255,11 +290,10 @@ if __name__ == "__main__":
             
             evaluation_result[query_type.name] = query_result
             
-            mAP_dict[query_type.name] = {
-                'mAP': cum_prec/len(eval.evaluate_set[query_type]),
-                'mAP_over_matched': cum_prec/matched_count if matched_count > 0 else 1
-            }
-    
+            pr_dict[query_type.name]['mAP'] = cum_prec/len(eval.evaluate_set[query_type]),
+            pr_dict[query_type.name]['mAPofMatched'] = cum_prec/matched_count if matched_count > 0 else 1
+            # plot_pr(precision_list, recall_list, mAP_dict[query_type.name]['mAP'], mAP_dict[query_type.name]['mAP_over_matched'], query_type, args.top_k)
+            plot_pr(pr_dict, args.top_k)
     json.dump(evaluation_result, open(os.path.join(args.result_path, 'neo4j_evaluation_result.json'), 'w', encoding='utf-8'), indent=2)
-    json.dump(mAP_dict, open(os.path.join(args.result_path, 'neo4j_mAP@{k}.txt'.format(k=args.top_k)), 'w', encoding='utf-8'), indent=2)
+    json.dump(pr_dict, open(os.path.join(args.result_path, 'neo4j_mAP@{k}.txt'.format(k=args.top_k)), 'w', encoding='utf-8'), indent=2)
 
