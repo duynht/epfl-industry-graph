@@ -18,7 +18,8 @@ class TwitterSwissActors(InMemoryDataset):
     @property
     def raw_file_names(self):
         return [
-            'twitter_user.csv', 'extracted_document_part*.csv', 
+            #files in subdir */raw/
+            'twitter_user.csv', 'extractedv4_document_part*.csv', 
             #'crunchbase'
         ]
 
@@ -50,10 +51,12 @@ class TwitterSwissActors(InMemoryDataset):
         user_df = pd.read_csv(path, usecols=['id', 'screen_name'], dtype={'id':'string', 'screen_name': 'string'})
         user_df = user_df.rename(columns = {'id': 'author_id', 'screen_name': 'username'})
 
-        path = osp.join(self.raw_dir, 'extracted_document_part*.csv')
+        path = osp.join(self.raw_dir, 'extractedv4_document_part*.csv')
         selected_cols = ['author_id', 'entities', 'hashtags']
         tweet_df = pd.concat([pd.read_csv(f, usecols=selected_cols, dtype={'author_id':'string'}) for f in glob.glob(path)], ignore_index=True)
-        tweet_df = tweet_df[tweet_df['author_id'].notnull()]            
+        tweet_df = tweet_df[tweet_df['author_id'].notnull()] 
+        tweet_df['entities'].fillna('[]', inplace = True)
+        tweet_df['hashtags'].fillna('[]', inplace = True)             
         tweet_df['content'] = tweet_df['entities'].apply(lambda x: ast.literal_eval(x)) + tweet_df['hashtags'].apply(lambda x: ast.literal_eval(x))
         tweet_df = tweet_df[['author_id', 'content']]
         tweet_df = tweet_df.groupby('author_id', as_index=False).agg(sum)
