@@ -10,6 +10,13 @@ from torch_geometric.data import (InMemoryDataset, Data, download_url,
                                   extract_zip)
 from functools import reduce
 
+import networkx as nx 
+from networkx.readwrite import json_graph
+import json
+
+def files_exist(files):
+    return len(files) != 0 and all(osp.exists(f) for f in files)
+
 class TwitterSwissActors(InMemoryDataset):
     def __init__(self, root, transform=None, pre_transform=None):
         super(TwitterSwissActors, self).__init__(root, transform, pre_transform)
@@ -25,7 +32,7 @@ class TwitterSwissActors(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return 'twitter_swiss_actors.pt'
+        return ['twitter_swiss_actors.pt', 'id_username.csv', 'id_field.csv']
 
     def process(self):
         def flatten_col(df, column):
@@ -50,6 +57,7 @@ class TwitterSwissActors(InMemoryDataset):
         path = osp.join(self.raw_dir, 'twitter_user.csv')
         user_df = pd.read_csv(path, usecols=['id', 'screen_name'], dtype={'id':'string', 'screen_name': 'string'})
         user_df = user_df.rename(columns = {'id': 'author_id', 'screen_name': 'username'})
+        user_df = user_df[user_df['username'].notnull()]
 
         path = osp.join(self.raw_dir, 'extractedv4_document_part*.csv')
         selected_cols = ['author_id', 'entities', 'hashtags']
@@ -64,7 +72,7 @@ class TwitterSwissActors(InMemoryDataset):
         tweet_df = tweet_df.sort_values(by='sort_val').drop(columns=['sort_val'])
         tweet_df.reset_index(drop=True, inplace=True)
         tweet_df['author_id'] = tweet_df['author_id'].astype('string')
-        tweet_df = tweet_df.merge(user_df, on='author_id', how='left')
+        tweet_df = tweet_df.merge(user_df, on='author_id')
         tweet_df = tweet_df[['username','content']]
         # tweet_df['content'] = tweet_df['content'].map(set)
         tweet_df['content'] = tweet_df['content'].map(lambda x: reduce(lambda acc, elem: acc+[elem] if not elem in acc else acc, x, []))
@@ -85,7 +93,6 @@ class TwitterSwissActors(InMemoryDataset):
         # tweet_df = tweet_df.reset_index(drop=True)
         # tweet_df.reset_index(inplace=True)
         # tweet_df = tweet_df.rename(columns = {'index': 'field_id'})
-
         #Get field ids
         field = pd.DataFrame({'content': tweet_df['content'].unique()})
         field.reset_index(inplace=True)
@@ -142,6 +149,40 @@ class TwitterSwissActors(InMemoryDataset):
             data = self.pre_transform(data)
 
         torch.save(self.collate([data]), self.processed_paths[0])
+        
+    def to_networkx(self, filename=None):
+        if not files_exist(self.processed_paths):
+            print('Dataset has yet been processed') 
+            return
+
+        node_dict = {}
+
+        company = pd.read_csv(osp.join(self.processed_dir, 'id_username.csv'))
+        node_dict['company'] = dict(zip(company['company_id'], company['username']))
+
+        field = pd.read_csv(osp.join(self.processed_dir, 'id_field.csv'))
+        node_dict['field'] = dict(zip(field['field_id'], field['content']))
+
+        G = nx.DiGraph()        
+
+        G.add_nodes_from(node_dict['company'].values())
+        G.add_nodes_from(node_dict['field'].values())
+
+        for metapath, edge_index in self.data.edge_index_dict[0].items():
+            for u, v in edge_index.t().tolist():
+                u = node_dict[metapath[0]][u]
+                v = node_dict[metapath[-1]][v]
+
+                G.add_edge(u, v)
+
+        # jg = json.dumps(json_graph.cytoscape_data(G))
+
+        if not filename is None:
+            # with open(osp.join(self.processed_dir, filename), "w") as outfile:
+            #     outfile.write(jg)
+            json.dump({u: [v for v in G.neighbors(u)] for u in G.nodes()}, open(osp.join(self.processed_dir, filename), "w"))
+
+        return G        
 
     def __repr__(self):
         return '{}()'.format(self.__class__.__name__)

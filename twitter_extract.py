@@ -57,11 +57,12 @@ if __name__ == '__main__':
                                       pool_recycle=300,
                                       pool_pre_ping=True,
                                       pool_use_lifo=True)
-  df = pd.read_sql_table('document', engine, columns=selected_cols, parse_dates={'publishing_date': {'format': '%Y-%m-%d %H:%M:%S'}}, index_col='publishing_date')
-  df = dd.from_pandas(df, npartitions=12)
-  df['entities'] = df.apply(lambda row: entity_fishing(row.body, row.language), axis=1)
-  df['hashtags'] = df.apply(lambda row: re.findall(r"#\w+\s*", row.body), axis=1)
-  
-  with ProgressBar():
-    # df = df.compute()
-    df.to_csv('../data/twitter_swiss_actors/extractedv4_document_part*.csv', index=False)
+  # df = pd.read_sql_table('document', engine, columns=selected_cols, parse_dates={'publishing_date': {'format': '%Y-%m-%d %H:%M:%S'}}, index_col='publishing_date')
+  # df = dd.from_pandas(df, npartitions=12)
+  # df['entities'] = df.apply(lambda row: entity_fishing(row.body, row.language), axis=1)
+  # df['hashtags'] = df.apply(lambda row: re.findall(r"#\w+\s*", row.body), axis=1)
+  df = pd.read_sql_table('document', engine)
+  df.to_csv('../data/twitter_swiss_actors/document.csv')
+  # with ProgressBar():
+  #   # df = df.compute()
+  #   df.to_csv('../data/twitter_swiss_actors/extractedv4_document_part*.csv', index=False)

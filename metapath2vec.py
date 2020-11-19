@@ -7,6 +7,7 @@ from gensim.models import KeyedVectors
 
 path = '../data/twitter_swiss_actors/'
 dataset = TSA(path)
+dataset.to_networkx('tsa_graph.json')
 data = dataset[0]
 print(data)
 
@@ -17,7 +18,7 @@ metapath = [
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = MetaPath2Vec(data.edge_index_dict, embedding_dim=128,
-                     metapath=metapath, walk_length=50, context_size=7,
+                     metapath=metapath, walk_length=16, context_size=7,
                      walks_per_node=5, num_negative_samples=5,
                      sparse=True).to(device)
 
@@ -25,7 +26,7 @@ loader = model.loader(batch_size=128, shuffle=True, num_workers=12)
 optimizer = torch.optim.SparseAdam(list(model.parameters()), lr=0.01)
 
 
-def train(epoch, log_steps=2000):
+def train(epoch, log_steps=200):
     model.train()
 
     total_loss = 0
@@ -42,7 +43,7 @@ def train(epoch, log_steps=2000):
             total_loss = 0
 
 
-for epoch in range(1, 6):
+for epoch in range(1, 31):
     train(epoch)
 
 company_df = pd.read_csv(osp.join(dataset.processed_dir, 'id_username.csv'))
@@ -50,11 +51,11 @@ company_df = pd.read_csv(osp.join(dataset.processed_dir, 'id_username.csv'))
 company_vec = model('company').cpu().detach().numpy()
 # breakpoint()
 company_emb = KeyedVectors(company_vec.shape[1])
-company_emb.add(company_df['username'].tolist(), company_vec)
-company_emb.save(osp.join(dataset.processed_dir, 'company_metapath2vec'))
+company_emb.add_vectors(company_df['username'].tolist(), company_vec)
+company_emb.save(osp.join(dataset.processed_dir, 'company_metapath2vec_16'))
 
 field_df = pd.read_csv(osp.join(dataset.processed_dir, 'id_field.csv'))
 field_vec = model('field').cpu().detach().numpy()
 field_emb = KeyedVectors(field_vec.shape[1])
-field_emb.add(field_df['content'].tolist(), field_vec)
-field_emb.save(osp.join(dataset.processed_dir, 'field_metapath2vec'))
+field_emb.add_vectors(field_df['content'].tolist(), field_vec)
+field_emb.save(osp.join(dataset.processed_dir, 'field_metapath2vec_16'))
