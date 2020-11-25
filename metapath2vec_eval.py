@@ -31,7 +31,8 @@ def recall_at_k(result_list, truth_set, k=40):
     return match_count / len(truth_set) if len(truth_set) > 0 else match_count
 
 def set_discard(s, val):
-    s.discard(val)
+
+    set(s).discard(val)
     return s
 
 if __name__ == "__main__":
@@ -48,7 +49,8 @@ if __name__ == "__main__":
     # for type, emb in emb_dict.items():
     #     indexer[type] = AnnoyIndexer(emb)
 
-    query_set = {'company2company', 'company2field', 'field2company'}
+    # query_set = {'company2company', 'company2field', 'field2company'}
+    query_set = {'company2company'}
 
     graphs = {}
     for query in query_set:
@@ -61,15 +63,16 @@ if __name__ == "__main__":
             top_k = emb_dict[dst_type].similar_by_vector(emb.get_vector(u), topn=k)
             graphs[query][u] = [v for v,_ in top_k]
 
-        json.dump(graphs[query], open(osp.join('results', query+'.json'), "w"))
+        # json.dump(graphs[query], open(osp.join('results', query+'.json'), "w")) #### output networkx graph
 
     # result = {}
     #company2company
     result = graphs['company2company']
-    crunch_df = pd.read_csv('../data/truth/crunchbase/nda_crunchbase.csv', usecols=['Twitter', 'Related'], dtype={'Twitter': 'string'})
+    crunch_df = pd.read_csv('../data/truth/crunchbase/swiss_crunchbase.csv', usecols=['Twitter', 'Related'], dtype={'Twitter': 'string'})
     crunch_df = crunch_df.rename(columns = {'Twitter': 'username', 'Related': 'crunchbase'})
     crunch_df = crunch_df[crunch_df['crunchbase'].notnull()]
     crunch_df = crunch_df[crunch_df['username'].notnull()]
+    crunch_df['crunchbase'] = crunch_df['crunchbase'].apply(lambda x: '{}' if x == 'set()' else x)
     crunch_df['crunchbase'] = crunch_df['crunchbase'].map(ast.literal_eval)
     crunch_df['crunchbase'] = crunch_df['crunchbase'].apply(lambda x: set_discard(x, ''))
 
@@ -78,10 +81,10 @@ if __name__ == "__main__":
     result_df['precision@40'] = result_df.apply(lambda row: precision_at_k(row.retrieved, row.crunchbase), axis=1)
     result_df['recall@40'] = result_df.apply(lambda row: recall_at_k(row.retrieved, row.crunchbase), axis=1)
 
-    result_df.to_csv(osp.join('results', '_'.join(['company2company', 'metapath2vec', 'result.csv'])), index=False)
-    result_df.to_csv(osp.join('~/onedrive/EPFL/results', '_'.join(['company2company', 'metapath2vec', 'result.csv'])), index=False)
-    result_df[['username', 'precision@40', 'recall@40']].to_csv(osp.join('results', '_'.join(['company2company', 'metapath2vec', 'short', 'result.csv'])), index=False)
-    result_df[['username', 'precision@40', 'recall@40']].to_csv(osp.join('~/onedrive/EPFL/results', '_'.join(['company2company', 'metapath2vec', 'short', 'result.csv'])), index=False)
+    result_df.to_csv(osp.join('results', '_'.join(['company2company', 'metapath2vec', 'swisscrunchbase','result.csv'])), index=False)
+    result_df.to_csv(osp.join('~/onedrive/EPFL/results', '_'.join(['company2company', 'metapath2vec', 'swisscrunchbase', 'result.csv'])), index=False)
+    result_df[['username', 'precision@40', 'recall@40']].to_csv(osp.join('results', '_'.join(['company2company', 'metapath2vec','swisscrunchbase', 'short', 'result.csv'])), index=False)
+    result_df[['username', 'precision@40', 'recall@40']].to_csv(osp.join('~/onedrive/EPFL/results', '_'.join(['company2company', 'metapath2vec','swisscrunchbase', 'short', 'result.csv'])), index=False)
 
 
     
