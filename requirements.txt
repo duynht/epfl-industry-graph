@@ -10,7 +10,7 @@ pandas
 texttable
 scipy
 argparse
-torch==1.1.0
+torch==2.2.0
 gensim==3.6.0
 faiss-cpu
 faiss-gpu
